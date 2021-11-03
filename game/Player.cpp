@@ -58,7 +58,7 @@ const int HEALTH_PER_DOSE = 10;
 const int WEAPON_DROP_TIME = 20 * 1000;
 
 // time before a next or prev weapon switch happens
-const int	WEAPON_SWITCH_DELAY		= 150;
+const int	WEAPON_SWITCH_DELAY		= 50;
 
 const float	PLAYER_ITEM_DROP_SPEED	= 100.0f;
 
@@ -73,6 +73,9 @@ const int	POWERUP_BLINK_TIME	= 1000;			// Time between powerup wear off sounds
 const float MIN_BOB_SPEED		= 5.0f;			// minimum speed to bob and play run/walk animations at
 const int	MAX_RESPAWN_TIME	= 10000;
 const int	RAGDOLL_DEATH_TIME	= 3000;
+const int   PRESSURE_AMMO_USAGE = 1;
+const int   FOCUS_BAND_PROC_CHANCE = 0.10f;
+
 #ifdef _XENON
 	const int	RAGDOLL_DEATH_TIME_XEN_SP	= 1000;
 	const int	MAX_RESPAWN_TIME_XEN_SP	= 3000;
@@ -4536,7 +4539,12 @@ void idPlayer::StopPowerUpEffect( int powerup ) {
 		(inventory.powerups & ( 1 << POWERUP_QUADDAMAGE ) ) || 
 		(inventory.powerups & ( 1 << POWERUP_REGENERATION ) ) || 
 		(inventory.powerups & ( 1 << POWERUP_HASTE ) ) || 
-		(inventory.powerups & ( 1 << POWERUP_INVISIBILITY ) ) 
+		(inventory.powerups & ( 1 << POWERUP_INVISIBILITY ) ) ||
+		(inventory.powerups & (1 << POWERUP_CURSE_BLINDNESS)) ||
+		(inventory.powerups & (1 << POWERUP_CURSE_TORMENT)) ||
+		(inventory.powerups & (1 << POWERUP_CURSE_GRAVITY)) ||
+		(inventory.powerups & (1 << POWERUP_CURSE_LEVITATION)) ||
+		(inventory.powerups & (1 << POWERUP_CURSE_PRESSURE))
 		) )	{
 
 			powerUpOverlay = NULL;
@@ -5056,6 +5064,16 @@ void idPlayer::ClearPowerUps( void ) {
    	}
 
 	inventory.ClearPowerUps();
+}
+
+/*
+==============
+idPlayer::HasKnack
+==============
+*/
+
+bool idPlayer::HasKnack(int k){
+	return (inventory.knack && inventory.knack == k) != 0;
 }
 
 /*
@@ -10150,27 +10168,26 @@ void idPlayer::Damage( idEntity *inflictor, idEntity *attacker, const idVec3 &di
 	knockback *= damageScale;
 
 	if ( knockback != 0 && !fl.noknockback ) {
-		if ( !gameLocal.isMultiplayer && attacker == this ) {
+		/*if (!gameLocal.isMultiplayer && attacker == this) {
 			//In SP, no knockback from your own stuff
 			knockback = 0;
+		} else {*/
+		if ( attacker != this ) {
+			attackerPushScale = 1.0f;
 		} else {
-			if ( attacker != this ) {
-				attackerPushScale = 1.0f;	
-			} else {
-				// since default attackerDamageScale is 0.5, default attackerPushScale should be 2
-				damageDef->dict.GetFloat( "attackerPushScale", "2", attackerPushScale );
-			}
-		
-			kick = dir;
-
-			kick.Normalize();
- 			kick *= g_knockback.GetFloat() * knockback * attackerPushScale / 200.0f;
-			
-			physicsObj.SetLinearVelocity( physicsObj.GetLinearVelocity() + kick );
-
-			// set the timer so that the player can't cancel out the movement immediately
- 			physicsObj.SetKnockBack( idMath::ClampInt( 50, 200, knockback * 2 ) );
+			// since default attackerDamageScale is 0.5, default attackerPushScale should be 2
+			damageDef->dict.GetFloat( "attackerPushScale", "2", attackerPushScale );
 		}
+		
+		kick = dir;
+
+		kick.Normalize();
+ 		kick *= g_knockback.GetFloat() * knockback * attackerPushScale / 200.0f;
+			
+		physicsObj.SetLinearVelocity( physicsObj.GetLinearVelocity() + kick );
+
+		// set the timer so that the player can't cancel out the movement immediately
+ 		physicsObj.SetKnockBack( idMath::ClampInt( 50, 200, knockback * 2 ) );
 	}
 	
 	if ( damageDef->dict.GetBool( "burn" ) ) {
@@ -10305,6 +10322,10 @@ void idPlayer::Damage( idEntity *inflictor, idEntity *attacker, const idVec3 &di
 			if ( !g_testDeath.GetBool() ) {
 				lastDmgTime = gameLocal.time;
 			}
+		}
+
+		if (attacker != this && HasKnack(KNACK_EMPATHY) && attacker->CanTakeDamage()) {
+			attacker->Damage(gameLocal.world, gameLocal.world, vec3_zero, "knockback", damageScale, location);
 		}
 	} else {
  		// don't accumulate impulses
@@ -12980,6 +13001,9 @@ void idPlayer::DamageFeedback( idEntity *victim, idEntity *inflictor, int &damag
 	} 
 
 	SetLastHitTime( gameLocal.time, armorHit );
+	if (HasKnack(KNACK_BLOODLUST)) {
+		health = min(health, health + damage / 10);
+	}
 }
 
 /*

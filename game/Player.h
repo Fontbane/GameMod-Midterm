@@ -124,6 +124,16 @@ enum {
 	POWERUP_HASTE,
 	POWERUP_REGENERATION,
 	POWERUP_INVISIBILITY,
+	POWERUP_SPLASH_SUIT,
+	POWERUP_CLIMBING_THING,
+
+	//curses
+	POWERUP_CURSE_BLINDNESS,
+	POWERUP_CURSE_TORMENT,
+	POWERUP_CURSE_ENCORE,
+	POWERUP_CURSE_GRAVITY,
+	POWERUP_CURSE_LEVITATION,
+	POWERUP_CURSE_PRESSURE,
 		
 	// ctf powerups
 	POWERUP_CTF_MARINEFLAG,
@@ -135,6 +145,9 @@ enum {
 	POWERUP_GUARD,
 	POWERUP_DOUBLER,
 	POWERUP_SCOUT,	// == 1.2 / protocol 69's POWERUP_MAX-1
+	POWERUP_EJECT_BUTTON,
+	POWERUP_RED_CARD,
+	POWERUP_FOCUS_BAND,
 
 	POWERUP_MODERATOR, // Note: This has to be here.  Otherwise, it breaks syncronization with some list elsewhere
 		
@@ -146,6 +159,18 @@ enum {
 	POWERUP_TEAM_DAMAGE_MOD,
 	
 	POWERUP_MAX
+};
+
+enum {
+	KNACK_NONE = 0,
+	KNACK_SUBSTITUTE,
+	KNACK_HALT,
+	KNACK_BLOODLUST,
+	KNACK_POCKET,
+	KNACK_PHASE,
+	KNACK_EMPATHY,
+
+	KNACK_MAX
 };
 
 enum {
@@ -201,6 +226,7 @@ public:
 	int						carryOverWeapons;
 // RITUAL END
 	int						powerups;
+	int						knack;
 	int						armor;
 	int						maxarmor;
 	int						ammo[ MAX_AMMO ];
@@ -234,6 +260,8 @@ public:
 	void					Clear( void );
 	void					GivePowerUp( idPlayer* player, int powerup, int msec );
 	void					ClearPowerUps( void );
+	void					GiveKnack(idPlayer* player, int knack);
+	void					ClearKnack(void);
 	void					GetPersistantData( idDict &dict );
 	void					RestoreInventory( idPlayer *owner, const idDict &dict );
 	bool					Give( idPlayer *owner, const idDict &spawnArgs, const char *statname, const char *value, int *idealWeapon, bool updateHud, bool dropped = false, bool checkOnly = false );
@@ -556,6 +584,8 @@ public:
 	float					PowerUpModifier				( int type );
 	void					ClearPowerup				( int i );
 	const char*				GetArenaPowerupString		( void );
+
+	bool					HasKnack(int knack);
 
 	// Helper methods to retrieving dictionaries
 	const idDeclEntityDef*	GetWeaponDef				( int weaponIndex );
