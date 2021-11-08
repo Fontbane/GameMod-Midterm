@@ -547,7 +547,7 @@ void idItem::Spawn( void ) {
 ================
 idItem::Event_SetGravity
 ================
-*/
+*/ 
 void idItem::Event_SetGravity() {
 	// If the item isnt a dropped item then see if it should settle itself
 	// to the floor or not

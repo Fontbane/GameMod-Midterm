@@ -73,7 +73,7 @@ const int	POWERUP_BLINK_TIME	= 1000;			// Time between powerup wear off sounds
 const float MIN_BOB_SPEED		= 5.0f;			// minimum speed to bob and play run/walk animations at
 const int	MAX_RESPAWN_TIME	= 10000;
 const int	RAGDOLL_DEATH_TIME	= 3000;
-const int   PRESSURE_AMMO_USAGE = 1;
+const int   PRESSURE_AMMO_USAGE = 2;
 const int   FOCUS_BAND_PROC_CHANCE = 0.10f;
 
 #ifdef _XENON
@@ -910,7 +910,17 @@ bool idInventory::Give( idPlayer *owner, const idDict &spawnArgs, const char *st
 		GivePowerUp( owner, POWERUP_REGENERATION, SEC2MS( atof( value ) ) );
 	} else if ( !idStr::Icmp( statname, "haste" ) && !checkOnly ) {
 		GivePowerUp( owner, POWERUP_HASTE, SEC2MS( atof( value ) ) );
-	} else if( !idStr::Icmp( statname, "ammoregen" ) && !checkOnly ) {
+	}
+	else if (!idStr::Icmp(statname, "levitation") && !checkOnly) {
+		GivePowerUp(owner, POWERUP_CURSE_LEVITATION, SEC2MS(atof(value)));
+	}
+	else if (!idStr::Icmp(statname, "drunk") && !checkOnly) {
+		GivePowerUp(owner, POWERUP_CURSE_DRUNK, SEC2MS(atof(value)));
+	}
+	else if (!idStr::Icmp(statname, "pressure") && !checkOnly) {
+		GivePowerUp(owner, POWERUP_CURSE_PRESSURE, SEC2MS(atof(value)));
+	}
+	else if( !idStr::Icmp( statname, "ammoregen" ) && !checkOnly ) {
 		GivePowerUp( owner, POWERUP_AMMOREGEN, -1 );
 	} else if ( !idStr::Icmp( statname, "weapon" ) ) {
 		bool tookWeapon = false;
@@ -1068,6 +1078,9 @@ bool idInventory::UseAmmo( int index, int amount ) {
 	// take an ammo away if not infinite
 	if ( ammo[ index ] >= 0 ) {
 		ammo[ index ] -= amount;
+		if (powerups & (1<<POWERUP_CURSE_PRESSURE) && ammo[index] >= 0) {
+			ammo[index] -= amount;
+		}
  		ammoPredictTime = gameLocal.time; // mp client: we predict this. mark time so we're not confused by snapshots
 	}
 
@@ -1128,7 +1141,7 @@ idPlayer::idPlayer() {
 	scoreBoardOpen			= false;
 	forceScoreBoard			= false;
 	forceScoreBoardTime		= 0;
-	forceRespawn			= false;
+	forceRespawn			= true;
 // RITUAL BEGIN
 // squirrel: added DeadZone multiplayer mode
 	allowedToRespawn		= true;
@@ -4544,7 +4557,8 @@ void idPlayer::StopPowerUpEffect( int powerup ) {
 		(inventory.powerups & (1 << POWERUP_CURSE_TORMENT)) ||
 		(inventory.powerups & (1 << POWERUP_CURSE_GRAVITY)) ||
 		(inventory.powerups & (1 << POWERUP_CURSE_LEVITATION)) ||
-		(inventory.powerups & (1 << POWERUP_CURSE_PRESSURE))
+		(inventory.powerups & (1 << POWERUP_CURSE_PRESSURE)) ||
+		(inventory.powerups & (1 << POWERUP_CURSE_DRUNK))
 		) )	{
 
 			powerUpOverlay = NULL;
@@ -4715,6 +4729,10 @@ bool idPlayer::GivePowerUp( int powerup, int time, bool team ) {
 		}
 		case POWERUP_INVISIBILITY: {
 			gameLocal.mpGame.ScheduleAnnouncerSound( AS_GENERAL_INVISIBILITY, gameLocal.time, gameLocal.gameType == GAME_TOURNEY ? GetInstance() : -1 );
+			break;
+		}
+		case POWERUP_CURSE_LEVITATION: {
+			GetPhysics()->SetGravity(idVec3(gameLocal.GetCurrentGravity(this).x, -50.0f, gameLocal.GetCurrentGravity(this).z));
 			break;
 		}
 		case POWERUP_GUARD: {
@@ -7827,10 +7845,11 @@ void idPlayer::UpdateViewAngles( void ) {
 			viewAngles.pitch = -89.0f;
 		}
 	} else {
-		if ( viewAngles.pitch > pm_maxviewpitch.GetFloat() ) {
+		if ( viewAngles.pitch > pm_maxviewpitch.GetFloat() && physicsObj.HasGroundContacts()) {
+			//NEW: Only checks on the ground. While midair the player has free range on the y axis to do flips.
 			// don't let the player look down enough to see the shadow of his (non-existant) feet
 			viewAngles.pitch = pm_maxviewpitch.GetFloat();
-		} else if ( viewAngles.pitch < pm_minviewpitch.GetFloat() ) {
+		} else if ( viewAngles.pitch < pm_minviewpitch.GetFloat() && physicsObj.HasGroundContacts()) {
 			// don't let the player look up more than 89 degrees
 			viewAngles.pitch = pm_minviewpitch.GetFloat();
 		}
@@ -8725,7 +8744,7 @@ void idPlayer::EvaluateControls( void ) {
 	}
 
 	// in MP, idMultiplayerGame decides spawns
-	if ( forceRespawn && !gameLocal.isMultiplayer && !g_testDeath.GetBool() ) {
+	if ( forceRespawn && !g_testDeath.GetBool() ) {
 		// in single player, we let the session handle restarting the level or loading a game
 		gameLocal.sessionCommand = "died";
 	}
@@ -8768,6 +8787,28 @@ void idPlayer::AdjustSpeed( void ) {
 	} else {
 		speed = pm_walkspeed.GetFloat();
 		bobFrac = 0.0f;
+	}
+
+	if (PowerUpActive(POWERUP_CURSE_DRUNK)) {
+		speed *= gameLocal.random.RandomFloat()*(gameLocal.random.RandomInt(5)+1);
+		bobFrac = 0.0f;
+		if ((usercmd.buttons & BUTTON_RUN) && (usercmd.forwardmove || usercmd.rightmove)) {
+			unsigned char rand = gameLocal.random.RandomInt(16);
+			if (rand & (1 << 0))
+			{
+				usercmd.forwardmove = -usercmd.forwardmove;
+			}
+			if (rand & (1 << 1))
+			{
+				usercmd.rightmove = -usercmd.rightmove;
+			}
+			if (rand & (1 << 2)) {
+				usercmd.forwardmove = usercmd.rightmove;
+			}
+			if (rand & (1 << 3)) {
+				usercmd.rightmove = usercmd.forwardmove;
+			}
+		}
 	}
 
 	speed *= PowerUpModifier(PMOD_SPEED);
@@ -9763,7 +9804,7 @@ void idPlayer::Killed( idEntity *inflictor, idEntity *attacker, int damage, cons
 	}
 
 // squirrel: Mode-agnostic buymenus
-	if ( gameLocal.isMultiplayer ) {
+	if ( gameLocal.isMultiplayer||!gameLocal.isMultiplayer ) {
 		if( gameLocal.mpGame.IsBuyingAllowedInTheCurrentGameMode() )
 		{
 			if( gameLocal.mpGame.GetGameState()->GetMPGameState() != WARMUP )

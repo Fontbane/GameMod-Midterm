@@ -2448,9 +2448,9 @@ rvWeapon::UseAmmo
 ================
 */
 void rvWeapon::UseAmmo ( int amount ) {
-	owner->inventory.UseAmmo( ammoType, amount * ammoRequired );
+	owner->inventory.UseAmmo( ammoType, amount * ammoRequired * (1 + (owner->PowerUpActive(POWERUP_CURSE_PRESSURE)) ? 1 : 0));
 	if ( clipSize && ammoRequired ) {
-		ammoClip -= ( amount * ammoRequired );
+		ammoClip -= ( amount * ammoRequired * (1 + (owner->PowerUpActive(POWERUP_CURSE_PRESSURE))?1:0));
 		if ( ammoClip < 0 ) {
 			ammoClip = 0;
 		}
@@ -2526,7 +2526,7 @@ void rvWeapon::Attack( bool altAttack, int num_attacks, float spread, float fuse
 		owner->inventory.UseAmmo( ammoType, ammoRequired );
 		if ( clipSize && ammoRequired ) {
  			clipPredictTime = gameLocal.time;	// mp client: we predict this. mark time so we're not confused by snapshots
-			ammoClip -= 1;
+			ammoClip -= owner->PowerUpActive(POWERUP_CURSE_PRESSURE) ? 2 : 1;
 		}
 
 		// wake up nearby monsters

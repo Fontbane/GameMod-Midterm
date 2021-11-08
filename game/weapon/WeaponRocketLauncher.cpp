@@ -218,6 +218,8 @@ void rvWeaponRocketLauncher::OnLaunchProjectile ( idProjectile* proj ) {
 		return;
 	}
 
+	owner->ApplyImpulse(gameLocal.world, 0, playerViewOrigin, playerViewOrigin + playerViewAxis[0] * guideRange);
+
 	// Launch the projectile
 	idEntityPtr<idEntity> ptr;
 	ptr = proj;

@@ -125,7 +125,6 @@ enum {
 	POWERUP_REGENERATION,
 	POWERUP_INVISIBILITY,
 	POWERUP_SPLASH_SUIT,
-	POWERUP_CLIMBING_THING,
 
 	//curses
 	POWERUP_CURSE_BLINDNESS,
@@ -134,6 +133,7 @@ enum {
 	POWERUP_CURSE_GRAVITY,
 	POWERUP_CURSE_LEVITATION,
 	POWERUP_CURSE_PRESSURE,
+	POWERUP_CURSE_DRUNK,
 		
 	// ctf powerups
 	POWERUP_CTF_MARINEFLAG,
@@ -585,7 +585,7 @@ public:
 	void					ClearPowerup				( int i );
 	const char*				GetArenaPowerupString		( void );
 
-	bool					HasKnack(int knack);
+	bool					HasKnack					(int knack);
 
 	// Helper methods to retrieving dictionaries
 	const idDeclEntityDef*	GetWeaponDef				( int weaponIndex );

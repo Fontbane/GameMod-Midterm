@@ -516,6 +516,21 @@ void GiveStuffToPlayer( idPlayer* player, const char* name, const char* value )
 		player->GivePowerUp( POWERUP_GUARD, -1 );
 		return;
 	}
+
+	if (idStr::Icmp(name, "levitation") == 0) {
+		player->GivePowerUp(POWERUP_CURSE_LEVITATION, -1);
+		return;
+	}
+
+	if (idStr::Icmp(name, "drunk") == 0) {
+		player->GivePowerUp(POWERUP_CURSE_DRUNK, -1);
+		return;
+	}
+
+	if (idStr::Icmp(name, "pressure") == 0) {
+		player->GivePowerUp(POWERUP_CURSE_PRESSURE, -1);
+		return;
+	}
 // RAVEN END
 
 	if ( !idStr::Icmp ( name, "wpmod_all" ) ) {
