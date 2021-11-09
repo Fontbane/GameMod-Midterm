@@ -156,7 +156,7 @@ void rvWeaponBlaster::Spawn ( void ) {
 	fireHeldTime		= 0;
 	fireForced			= false;
 			
-	Flashlight ( true );
+	Flashlight ( false );
 }
 
 /*

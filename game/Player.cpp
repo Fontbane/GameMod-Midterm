@@ -920,6 +920,12 @@ bool idInventory::Give( idPlayer *owner, const idDict &spawnArgs, const char *st
 	else if (!idStr::Icmp(statname, "pressure") && !checkOnly) {
 		GivePowerUp(owner, POWERUP_CURSE_PRESSURE, SEC2MS(atof(value)));
 	}
+	else if (!idStr::Icmp(statname, "splashsuit") && !checkOnly) {
+		GivePowerUp(owner, POWERUP_SPLASH_SUIT, SEC2MS(atof(value)));
+	}
+	else if (!idStr::Icmp(statname, "invis") && !checkOnly) {
+		GivePowerUp(owner, POWERUP_INVISIBILITY, SEC2MS(atof(value)));
+	}
 	else if( !idStr::Icmp( statname, "ammoregen" ) && !checkOnly ) {
 		GivePowerUp( owner, POWERUP_AMMOREGEN, -1 );
 	} else if ( !idStr::Icmp( statname, "weapon" ) ) {
@@ -3991,6 +3997,10 @@ void idPlayer::FireWeapon( void ) {
 		return;
 	}
 
+	if (PowerUpActive(POWERUP_INVISIBILITY)) {
+		StopPowerUpEffect(POWERUP_INVISIBILITY);
+	}
+
 	if ( g_editEntityMode.GetInteger() ) {
 		GetViewPos( muzzle, axis );
 		gameLocal.editEntities->SelectEntity( muzzle, axis[0], this );	
@@ -4476,6 +4486,20 @@ void idPlayer::StartPowerUpEffect( int powerup ) {
 			powerUpOverlay = invisibilityOverlay;
 
 			powerUpSkin = declManager->FindSkin( spawnArgs.GetString( "skin_invisibility" ), false );
+
+			fl.notarget = true;
+
+			break;
+		}
+
+		case POWERUP_CURSE_DRUNK: {
+			gameLocal.StartViewEffect(VIEWEFFECT_DOUBLEVISION, 30.0f, 0.5f);
+			//gameLocal.StartViewEffect(VIEWEFFECT_SHAKE, 60.0f, 0.5f); too much lol
+			break;
+		}
+
+		case POWERUP_CURSE_BLINDNESS: {
+			playerView.Flash(colorBlack, SEC2MS(300));
 			break;
 		}
 
@@ -4554,11 +4578,9 @@ void idPlayer::StopPowerUpEffect( int powerup ) {
 		(inventory.powerups & ( 1 << POWERUP_HASTE ) ) || 
 		(inventory.powerups & ( 1 << POWERUP_INVISIBILITY ) ) ||
 		(inventory.powerups & (1 << POWERUP_CURSE_BLINDNESS)) ||
-		(inventory.powerups & (1 << POWERUP_CURSE_TORMENT)) ||
-		(inventory.powerups & (1 << POWERUP_CURSE_GRAVITY)) ||
-		(inventory.powerups & (1 << POWERUP_CURSE_LEVITATION)) ||
 		(inventory.powerups & (1 << POWERUP_CURSE_PRESSURE)) ||
-		(inventory.powerups & (1 << POWERUP_CURSE_DRUNK))
+		(inventory.powerups & (1 << POWERUP_CURSE_DRUNK)) ||
+		(inventory.powerups & (1 << POWERUP_SPLASH_SUIT))
 		) )	{
 
 			powerUpOverlay = NULL;
@@ -4593,6 +4615,12 @@ void idPlayer::StopPowerUpEffect( int powerup ) {
 		}
 		case POWERUP_INVISIBILITY: {
 			powerUpSkin = NULL;
+			fl.notarget = false;
+			break;
+		}
+		case POWERUP_CURSE_LEVITATION: {
+			GetPhysics()->SetGravity(idVec3(-gameLocal.GetCurrentGravity(this).x, -gameLocal.GetCurrentGravity(this).y * 16, -gameLocal.GetCurrentGravity(this).z));
+			UpdateGravity();
 			break;
 		}
 		case POWERUP_CTF_STROGGFLAG: {
@@ -4732,7 +4760,8 @@ bool idPlayer::GivePowerUp( int powerup, int time, bool team ) {
 			break;
 		}
 		case POWERUP_CURSE_LEVITATION: {
-			GetPhysics()->SetGravity(idVec3(gameLocal.GetCurrentGravity(this).x, -50.0f, gameLocal.GetCurrentGravity(this).z));
+			GetPhysics()->SetGravity(idVec3(-gameLocal.GetCurrentGravity(this).x, -gameLocal.GetCurrentGravity(this).y/16, -gameLocal.GetCurrentGravity(this).z));
+			UpdateGravity();
 			break;
 		}
 		case POWERUP_GUARD: {
@@ -7945,6 +7974,9 @@ idPlayer::UpdateGravity
 */
 void idPlayer::UpdateGravity( void ) {
 	GetPhysics()->SetGravity( gameLocal.GetCurrentGravity(this) );
+	if (PowerUpActive(POWERUP_CURSE_LEVITATION)) {
+		GetPhysics()->SetGravity(idVec3(-gameLocal.GetCurrentGravity(this).x, (-gameLocal.GetCurrentGravity(this).y)/16, -gameLocal.GetCurrentGravity(this).z));
+	}
 }
 // RAVEN END
 
@@ -8790,11 +8822,10 @@ void idPlayer::AdjustSpeed( void ) {
 	}
 
 	if (PowerUpActive(POWERUP_CURSE_DRUNK)) {
-		speed *= gameLocal.random.RandomFloat()*(gameLocal.random.RandomInt(5)+1);
-		bobFrac = 0.0f;
-		if ((usercmd.buttons & BUTTON_RUN) && (usercmd.forwardmove || usercmd.rightmove)) {
-			unsigned char rand = gameLocal.random.RandomInt(16);
-			if (rand & (1 << 0))
+		speed *= max( gameLocal.random.RandomFloat()*(gameLocal.random.RandomInt(2)+1), 1 );
+		if ((usercmd.buttons & BUTTON_RUN) && (usercmd.forwardmove || usercmd.rightmove)&&gameLocal.random.RandomInt(2)) {
+			unsigned char rand = gameLocal.random.RandomInt(16);//4 am is the appropriate time to code drunk movement
+			if (rand & (1 << 0))//I was not drunk while writing this I swear
 			{
 				usercmd.forwardmove = -usercmd.forwardmove;
 			}
@@ -8808,7 +8839,23 @@ void idPlayer::AdjustSpeed( void ) {
 			if (rand & (1 << 3)) {
 				usercmd.rightmove = usercmd.forwardmove;
 			}
+			// 1/2 chance to do nothing
+		}/*
+		unsigned char rand = gameLocal.random.RandomInt(16);
+		if (rand & (1 << 0))
+		{
+			usercmd.mx = (short)gameLocal.random.RandomInt(250);
 		}
+		if (rand & (1 << 1))
+		{
+			usercmd.my = (short)gameLocal.random.RandomInt(250);
+		}
+		if (rand & (1 << 2)) {
+			usercmd.mx = (short)gameLocal.random.RandomInt(512);
+		}
+		if (rand & (1 << 3)) {
+			usercmd.my = (short)gameLocal.random.RandomInt(512);
+		}*/
 	}
 
 	speed *= PowerUpModifier(PMOD_SPEED);
@@ -13455,7 +13502,7 @@ void idPlayer::ApplyImpulse( idEntity *ent, int id, const idVec3 &point, const i
 			lastImpulsePlayer = static_cast<idPlayer*>(owner);
 		}
 	}
-
+	//splash = !PowerUpActive(POWERUP_SPLASH_SUIT);
 	idAFEntity_Base::ApplyImpulse( ent, id, point, impulse, splash );
 }
 

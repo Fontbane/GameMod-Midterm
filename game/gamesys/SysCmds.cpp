@@ -518,17 +518,27 @@ void GiveStuffToPlayer( idPlayer* player, const char* name, const char* value )
 	}
 
 	if (idStr::Icmp(name, "levitation") == 0) {
-		player->GivePowerUp(POWERUP_CURSE_LEVITATION, -1);
+		player->GivePowerUp(POWERUP_CURSE_LEVITATION, SEC2MS(30.0f));
 		return;
 	}
 
 	if (idStr::Icmp(name, "drunk") == 0) {
-		player->GivePowerUp(POWERUP_CURSE_DRUNK, -1);
+		player->GivePowerUp(POWERUP_CURSE_DRUNK, SEC2MS(30.0f));
 		return;
 	}
 
 	if (idStr::Icmp(name, "pressure") == 0) {
-		player->GivePowerUp(POWERUP_CURSE_PRESSURE, -1);
+		player->GivePowerUp(POWERUP_CURSE_PRESSURE, SEC2MS(30.0f));
+		return;
+	}
+	
+	if (idStr::Icmp(name, "splashsuit") == 0) {
+		player->GivePowerUp(POWERUP_SPLASH_SUIT, SEC2MS(30.0f));
+		return;
+	}
+
+	if (idStr::Icmp(name, "blindness") == 0) {
+		player->GivePowerUp(POWERUP_CURSE_BLINDNESS, SEC2MS(30.0f));
 		return;
 	}
 // RAVEN END

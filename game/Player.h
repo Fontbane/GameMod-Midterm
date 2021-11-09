@@ -43,6 +43,10 @@ const int	CARRYOVER_FLAG_ARMOR_HEAVY	= 0x10000000;
 const int	CARRYOVER_WEAPONS_MASK		= 0x0FFFFFFF;
 const int	CARRYOVER_FLAGS_MASK		= 0xF0000000;
 
+const int	COOLDOWN_SUBSTITUTE = SEC2MS(20);
+const int	COOLDOWN_TELEPORTER = SEC2MS(60);
+const int	COOLDOWN_GRAV_SWITCH = SEC2MS(5);
+
 const int	MAX_SKILL_LEVELS			= 4;
 
 const int	ZERO_VOLUME					= -40;			// volume at zero
@@ -117,6 +121,11 @@ typedef struct {
  	idVec3	pos;
 } aasLocation_t;
 
+struct idKnackInfo{
+	int knack;
+	int lastUsed;
+};
+
 // powerups
 enum {
 	// standard powerups
@@ -124,16 +133,6 @@ enum {
 	POWERUP_HASTE,
 	POWERUP_REGENERATION,
 	POWERUP_INVISIBILITY,
-	POWERUP_SPLASH_SUIT,
-
-	//curses
-	POWERUP_CURSE_BLINDNESS,
-	POWERUP_CURSE_TORMENT,
-	POWERUP_CURSE_ENCORE,
-	POWERUP_CURSE_GRAVITY,
-	POWERUP_CURSE_LEVITATION,
-	POWERUP_CURSE_PRESSURE,
-	POWERUP_CURSE_DRUNK,
 		
 	// ctf powerups
 	POWERUP_CTF_MARINEFLAG,
@@ -145,9 +144,6 @@ enum {
 	POWERUP_GUARD,
 	POWERUP_DOUBLER,
 	POWERUP_SCOUT,	// == 1.2 / protocol 69's POWERUP_MAX-1
-	POWERUP_EJECT_BUTTON,
-	POWERUP_RED_CARD,
-	POWERUP_FOCUS_BAND,
 
 	POWERUP_MODERATOR, // Note: This has to be here.  Otherwise, it breaks syncronization with some list elsewhere
 		
@@ -157,6 +153,15 @@ enum {
 	POWERUP_TEAM_AMMO_REGEN,
 	POWERUP_TEAM_HEALTH_REGEN,
 	POWERUP_TEAM_DAMAGE_MOD,
+
+	//one good powerup as a treat
+	POWERUP_SPLASH_SUIT,
+
+	//curses
+	POWERUP_CURSE_BLINDNESS,
+	POWERUP_CURSE_LEVITATION,
+	POWERUP_CURSE_PRESSURE,
+	POWERUP_CURSE_DRUNK,
 	
 	POWERUP_MAX
 };
@@ -164,9 +169,8 @@ enum {
 enum {
 	KNACK_NONE = 0,
 	KNACK_SUBSTITUTE,
-	KNACK_HALT,
 	KNACK_BLOODLUST,
-	KNACK_POCKET,
+	KNACK_GRAV_SWITCH,
 	KNACK_PHASE,
 	KNACK_EMPATHY,
 
@@ -262,6 +266,8 @@ public:
 	void					ClearPowerUps( void );
 	void					GiveKnack(idPlayer* player, int knack);
 	void					ClearKnack(void);
+	void					ActivateKnack(idPlayer* player, int knack);
+	void					SwitchKnack(idPlayer* player, int knack);
 	void					GetPersistantData( idDict &dict );
 	void					RestoreInventory( idPlayer *owner, const idDict &dict );
 	bool					Give( idPlayer *owner, const idDict &spawnArgs, const char *statname, const char *value, int *idealWeapon, bool updateHud, bool dropped = false, bool checkOnly = false );
@@ -572,6 +578,11 @@ public:
 	void					DiscoverSecretArea			( const char *description);
 	
 	void					StartBossBattle				( idEntity* ent );
+
+	void					GiveKnack(idPlayer* player, int knack);
+	void					ActivateKnack(idPlayer* player, int knack);
+	void					SwitchKnack(idPlayer* player, int knack);
+	void					ClearKnack(void);
 
 	// Powerups
 	bool					GivePowerUp					( int powerup, int time, bool team = false );
