@@ -78,6 +78,9 @@ void rvAIMedic::Spawn ( void ) {
 	if ( spawnArgs.GetBool( "enableHeal" ) ) {
 		Event_EnableHeal();
 	}
+	if (spawnArgs.GetBool("disableMovement")) {
+		Event_DisableMovement();
+	}
 	const char  *func;
 	if ( spawnArgs.GetString( "script_postHeal", "", &func ) ) 
 	{

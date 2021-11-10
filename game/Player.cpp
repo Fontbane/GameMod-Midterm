@@ -74,7 +74,6 @@ const float MIN_BOB_SPEED		= 5.0f;			// minimum speed to bob and play run/walk a
 const int	MAX_RESPAWN_TIME	= 10000;
 const int	RAGDOLL_DEATH_TIME	= 3000;
 const int   PRESSURE_AMMO_USAGE = 2;
-const int   FOCUS_BAND_PROC_CHANCE = 0.10f;
 
 #ifdef _XENON
 	const int	RAGDOLL_DEATH_TIME_XEN_SP	= 1000;
@@ -260,6 +259,37 @@ void idInventory::ClearPowerUps( void ) {
 		powerupEndTime[ i ] = 0;
 	}
 	powerups = 0;
+}
+
+/*
+==============
+idInventory::GiveKnack
+==============
+*/
+void idInventory::GiveKnack(idPlayer* player, int knack) {
+	this->knack.knack=knack;
+	this->knack.lastUsed = gameLocal.time;
+	this->knack.nextUse = this->knack.lastUsed + KnackCooldowns[knack];
+}
+
+/*
+==============
+idInventory::ClearKnack
+==============
+*/
+void idInventory::ClearKnack(void) {
+	knack.knack = KNACK_NONE;
+	knack.lastUsed = gameLocal.time;
+}
+
+/*
+==============
+idInventory::ActivateKnack
+==============
+*/
+void idInventory::ActivateKnack(void) {
+	knack.lastUsed = gameLocal.time;
+	knack.nextUse = knack.lastUsed + KnackCooldowns[knack.knack];
 }
 
 /*
@@ -1999,7 +2029,7 @@ void idPlayer::Spawn( void ) {
 		}
 // RAVEN BEGIN
 // mekberg: set to blaster now and disable the weapon.
-		idealWeapon = SlotForWeapon ( "weapon_blaster" ); 
+		idealWeapon = SlotForWeapon ( "weapon_gauntlet" ); 
 		Event_DisableWeapon( );
 // RAVEN END
 	} else {
@@ -5120,8 +5150,120 @@ idPlayer::HasKnack
 */
 
 bool idPlayer::HasKnack(int k){
-	return (inventory.knack && inventory.knack == k) != 0;
+	return k&&(inventory.knack.knack && inventory.knack.lastUsed && inventory.knack.nextUse && inventory.knack.knack == k) != 0;
 }
+
+/*
+===============
+idPlayer::GiveKnack
+passiveEffectsOnly - GivePowerup() is used to restore effects on stale players coming
+back into snapshot.  We don't want to announce powerups in this case
+(just re-start effects)
+===============
+*/
+bool idPlayer::GiveKnack(int knack) {
+	if (knack < 0 || knack >= POWERUP_MAX) {
+		gameLocal.Warning("Player given knack %i\n which is out of range", knack);
+		return false;
+	}
+
+	inventory.GiveKnack(this, knack);
+
+	// only start client effects in the same instance
+	// play all stuff in instance 0 for server netdemo - atm other instances are not recorded
+	bool playClientEffects = ((gameLocal.GetDemoState() == DEMO_PLAYING && gameLocal.IsServerDemo() && instance == 0) ||
+		(gameLocal.GetLocalPlayer() && gameLocal.GetLocalPlayer()->GetInstance() == instance));
+
+	switch (knack) {
+
+	case KNACK_BLOODLUST: {
+		// shouchard:  added notice for picking up the flag
+		if (playClientEffects && this == gameLocal.GetLocalPlayer()) {
+			if (hud) {
+				hud->SetStateString("main_notice_text", "Knack Obtained: Bloodlust");
+				hud->HandleNamedEvent("main_notice");
+			}
+		}
+		break;
+	}
+
+	case KNACK_EMPATHY: {
+		// shouchard:  added notice for picking up the flag
+		if (playClientEffects && this == gameLocal.GetLocalPlayer()) {
+			if (hud) {
+				hud->SetStateString("main_notice_text", "Knack Obtained: Empathy Shield");
+				hud->HandleNamedEvent("main_notice");
+			}
+		}
+		break;
+	}
+
+	case KNACK_SUBSTITUTE: {
+		// shouchard:  added notice for picking up the flag
+		if (playClientEffects && this == gameLocal.GetLocalPlayer()) {
+			if (hud) {
+				hud->SetStateString("main_notice_text", "Knack Obtained: Substitute");
+				hud->HandleNamedEvent("main_notice");
+			}
+		}
+		break;
+	}
+
+	case KNACK_TELEPORTER: {
+		// shouchard:  added notice for picking up the flag
+		if (playClientEffects && this == gameLocal.GetLocalPlayer()) {
+			if (hud) {
+				hud->SetStateString("main_notice_text", "Knack Obtained: Teleporter");
+				hud->HandleNamedEvent("main_notice");
+			}
+		}
+		break;
+	}
+
+	case KNACK_GRAV_SWITCH: {
+		// shouchard:  added notice for picking up the flag
+		if (playClientEffects && this == gameLocal.GetLocalPlayer()) {
+			if (hud) {
+				hud->SetStateString("main_notice_text", "Knack Obtained: Grav Switch");
+				hud->HandleNamedEvent("main_notice");
+			}
+		}
+		break;
+	}
+	
+						 //RITUAL END
+	}
+
+	return true;
+}
+
+/*
+===============
+idPlayer::GiveWeaponMods
+===============
+*/
+bool idPlayer::ActivateKnack() {
+	idKnackInfo knackInfo = inventory.knack;
+	int knack = knackInfo.knack;
+	if (KnackCooldowns[knack] < 1) {//knack is passive and thus always active so has no cooldown
+		return false;
+	}
+	if (knackInfo.nextUse >= gameLocal.time) {//cooldown has not ended
+		return false;
+	}
+	switch (knack) {
+	case KNACK_SUBSTITUTE:
+		rvAIMedic sub=rvAIMedic();
+
+		sub->spawnArgs("disableHeal", true);
+		sub->spawnArgs("disableMovement", true);
+		sub.Spawn();
+	}
+
+	return true;
+}
+
+
 
 /*
 ===============
@@ -6257,7 +6399,7 @@ void idPlayer::Weapon_NPC( void ) {
 				talkingNPC = focusAI;
 			}
 		}
-	} else if ( currentWeapon == SlotForWeapon ( "weapon_blaster" ) ) {
+	} else if ( currentWeapon == SlotForWeapon ( "weapon_gauntlet" ) ) {
 		Weapon_Combat();
 	}
 }

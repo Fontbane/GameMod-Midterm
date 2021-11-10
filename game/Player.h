@@ -47,6 +47,28 @@ const int	COOLDOWN_SUBSTITUTE = SEC2MS(20);
 const int	COOLDOWN_TELEPORTER = SEC2MS(60);
 const int	COOLDOWN_GRAV_SWITCH = SEC2MS(5);
 
+const int KnackCooldowns[] = {
+	0,	//KNACK_NONE
+	COOLDOWN_SUBSTITUTE,
+	COOLDOWN_TELEPORTER,
+	COOLDOWN_GRAV_SWITCH,
+	0,	//KNACK_BLOODLUST
+	0,	//KNACK_EMPATHY
+
+	0	//KNACK_MAX
+};
+
+const idStr KnackNames[] = {
+	"",	//KNACK_NONE
+	"Substitute",
+	"Porta-Porter",
+	"VVVVVV",
+	"Bloodlust",
+	"Empathy Shield",
+
+	""	//KNACK_MAX
+};
+
 const int	MAX_SKILL_LEVELS			= 4;
 
 const int	ZERO_VOLUME					= -40;			// volume at zero
@@ -124,6 +146,7 @@ typedef struct {
 struct idKnackInfo{
 	int knack;
 	int lastUsed;
+	int nextUse = lastUsed+KnackCooldowns[knack];
 };
 
 // powerups
@@ -169,9 +192,9 @@ enum {
 enum {
 	KNACK_NONE = 0,
 	KNACK_SUBSTITUTE,
-	KNACK_BLOODLUST,
+	KNACK_TELEPORTER,
 	KNACK_GRAV_SWITCH,
-	KNACK_PHASE,
+	KNACK_BLOODLUST,
 	KNACK_EMPATHY,
 
 	KNACK_MAX
@@ -230,7 +253,7 @@ public:
 	int						carryOverWeapons;
 // RITUAL END
 	int						powerups;
-	int						knack;
+	idKnackInfo				knack;
 	int						armor;
 	int						maxarmor;
 	int						ammo[ MAX_AMMO ];
@@ -266,8 +289,7 @@ public:
 	void					ClearPowerUps( void );
 	void					GiveKnack(idPlayer* player, int knack);
 	void					ClearKnack(void);
-	void					ActivateKnack(idPlayer* player, int knack);
-	void					SwitchKnack(idPlayer* player, int knack);
+	void					ActivateKnack(void);
 	void					GetPersistantData( idDict &dict );
 	void					RestoreInventory( idPlayer *owner, const idDict &dict );
 	bool					Give( idPlayer *owner, const idDict &spawnArgs, const char *statname, const char *value, int *idealWeapon, bool updateHud, bool dropped = false, bool checkOnly = false );
@@ -579,9 +601,8 @@ public:
 	
 	void					StartBossBattle				( idEntity* ent );
 
-	void					GiveKnack(idPlayer* player, int knack);
-	void					ActivateKnack(idPlayer* player, int knack);
-	void					SwitchKnack(idPlayer* player, int knack);
+	bool					GiveKnack(int knack);
+	bool					ActivateKnack(void);
 	void					ClearKnack(void);
 
 	// Powerups
@@ -597,6 +618,10 @@ public:
 	const char*				GetArenaPowerupString		( void );
 
 	bool					HasKnack					(int knack);
+	void					GiveKnack(int knack);
+	void					ActivateKnack(void);
+	void					SwitchKnack(int knack);
+	void					ClearKnack(void);
 
 	// Helper methods to retrieving dictionaries
 	const idDeclEntityDef*	GetWeaponDef				( int weaponIndex );
