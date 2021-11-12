@@ -541,6 +541,25 @@ void GiveStuffToPlayer( idPlayer* player, const char* name, const char* value )
 		player->GivePowerUp(POWERUP_CURSE_BLINDNESS, SEC2MS(30.0f));
 		return;
 	}
+
+	if (idStr::Icmp(name, "kbloodlust") == 0) {
+		player->GiveKnack(KNACK_BLOODLUST);
+		return;
+	}
+	if (idStr::Icmp(name, "kempathy") == 0) {
+		player->GiveKnack(KNACK_EMPATHY);
+		return;
+	}
+	if (idStr::Icmp(name, "kteleporter") == 0) {
+		player->GiveKnack(KNACK_TELEPORTER);
+		return;
+	}
+	if (idStr::Icmp(name, "ksubstitute") == 0) {
+		player->GiveKnack(KNACK_SUBSTITUTE);
+		return;
+	}
+
+
 // RAVEN END
 
 	if ( !idStr::Icmp ( name, "wpmod_all" ) ) {

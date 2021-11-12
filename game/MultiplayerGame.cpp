@@ -2798,7 +2798,7 @@ void idMultiplayerGame::CommonRun( void ) {
 
 		// jscott: enable the voice recording
 		testing = cvarSystem->GetCVarBool( "s_voiceChatTest" );
-		sending = soundSystem->EnableRecording( !!( player->usercmd.buttons & BUTTON_VOICECHAT ), testing, micLevel );
+		sending = soundSystem->EnableRecording( !!( player->usercmd.buttons & BUTTON_TOURNEY ), testing, micLevel );
 
 		if( mainGui ) {
 			mainGui->SetStateFloat( "s_micLevel", micLevel );

@@ -956,6 +956,18 @@ bool idInventory::Give( idPlayer *owner, const idDict &spawnArgs, const char *st
 	else if (!idStr::Icmp(statname, "invis") && !checkOnly) {
 		GivePowerUp(owner, POWERUP_INVISIBILITY, SEC2MS(atof(value)));
 	}
+	else if (!idStr::Icmp(statname, "kbloodlust") && !checkOnly) {
+		GiveKnack(owner, KNACK_BLOODLUST);
+	}
+	else if (!idStr::Icmp(statname, "kempathy") && !checkOnly) {
+		GiveKnack(owner, KNACK_EMPATHY);
+	}
+	else if (!idStr::Icmp(statname, "kteleporter") && !checkOnly) {
+		GiveKnack(owner, KNACK_TELEPORTER);
+	}
+	else if (!idStr::Icmp(statname, "ksubstitute") && !checkOnly) {
+		GiveKnack(owner, KNACK_SUBSTITUTE);
+	}
 	else if( !idStr::Icmp( statname, "ammoregen" ) && !checkOnly ) {
 		GivePowerUp( owner, POWERUP_AMMOREGEN, -1 );
 	} else if ( !idStr::Icmp( statname, "weapon" ) ) {
@@ -5251,14 +5263,35 @@ bool idPlayer::ActivateKnack() {
 	if (knackInfo.nextUse >= gameLocal.time) {//cooldown has not ended
 		return false;
 	}
-	switch (knack) {
-	case KNACK_SUBSTITUTE:
-		rvAIMedic sub=rvAIMedic();
+	if (knack==KNACK_SUBSTITUTE)
+	{
+		idVec3 currpos;
+		idMat3 currAx;
+		this->GetPosition(currpos, currAx);
 
-		sub->spawnArgs("disableHeal", true);
-		sub->spawnArgs("disableMovement", true);
-		sub.Spawn();
+		currpos.x += 2;
+		currpos.z += 2;
+
+		idDict subargs;
+		rvAIMedic* sub;
+		subargs.Copy(*gameLocal.FindEntityDefDict("char_marine_medic"));
+		subargs.SetBool("disableHeal", true);
+		subargs.SetBool("disableMovement", true);
+		gameLocal.SpawnEntityDef(subargs, (idEntity**)&sub);
+		sub->SetOrigin(currpos);
+		fl.notarget = true;
+		fl.notarget = false;
 	}
+	if (knack==KNACK_TELEPORTER){
+		idEntity* newPt = gameLocal.SelectSpawnPoint(this);
+		idVec3 newPos;
+		idMat3 newAx;
+		newPt->GetPosition(newPos, newAx);
+		
+		Teleport(newPos, newAx.ToAngles(), newPt);
+	}
+
+	inventory.ActivateKnack();
 
 	return true;
 }
@@ -9708,6 +9741,10 @@ void idPlayer::Think( void ) {
 		return;
 	}
 
+	if (usercmd.buttons & BUTTON_VOICECHAT) {//no one's using this, mightr as well use it as the knack button
+		ActivateKnack();
+	}
+
 	// log movement changes for weapon bobbing effects
 	if ( usercmd.forwardmove != oldCmd.forwardmove ) {
 		loggedAccel_t	*acc = &loggedAccel[currentLoggedAccel&(NUM_LOGGED_ACCELS-1)];
@@ -10555,7 +10592,7 @@ void idPlayer::Damage( idEntity *inflictor, idEntity *attacker, const idVec3 &di
 		}
 
 		if (attacker != this && HasKnack(KNACK_EMPATHY) && attacker->CanTakeDamage()) {
-			attacker->Damage(gameLocal.world, gameLocal.world, vec3_zero, "knockback", damageScale, location);
+			attacker->Damage(gameLocal.world, gameLocal.world, vec3_zero, "damage_triggerhurt_10", damageScale, location);
 		}
 	} else {
  		// don't accumulate impulses

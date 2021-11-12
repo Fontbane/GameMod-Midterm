@@ -144,8 +144,8 @@ typedef struct {
 } aasLocation_t;
 
 struct idKnackInfo{
-	int knack;
-	int lastUsed;
+	int knack=0;
+	int lastUsed=0;
 	int nextUse = lastUsed+KnackCooldowns[knack];
 };
 
@@ -601,10 +601,6 @@ public:
 	
 	void					StartBossBattle				( idEntity* ent );
 
-	bool					GiveKnack(int knack);
-	bool					ActivateKnack(void);
-	void					ClearKnack(void);
-
 	// Powerups
 	bool					GivePowerUp					( int powerup, int time, bool team = false );
 	void					ClearPowerUps				( void );
@@ -618,8 +614,8 @@ public:
 	const char*				GetArenaPowerupString		( void );
 
 	bool					HasKnack					(int knack);
-	void					GiveKnack(int knack);
-	void					ActivateKnack(void);
+	bool					GiveKnack(int knack);
+	bool					ActivateKnack(void);
 	void					SwitchKnack(int knack);
 	void					ClearKnack(void);
 
