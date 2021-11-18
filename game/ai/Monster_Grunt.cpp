@@ -196,7 +196,20 @@ rvMonsterGrunt::OnDeath
 */
 void rvMonsterGrunt::OnDeath ( void ) {
 	RageStop ( );
-	return idAI::OnDeath ( );
+	if (spawnArgs.GetBool("sterilized")) {
+		return idAI::OnDeath();
+	}
+	idDict babyargs;
+	rvMonsterGrunt* babyGrunt;
+	rvMonsterGrunt* babyGrunt2;
+	SpawnGibs(GetPhysics()->GetOrigin(), "damage_triggerhurt_1000");
+	babyargs.Copy(*gameLocal.FindEntityDefDict("monster_grunt"));
+	babyargs.SetInt("health", spawnArgs.GetInt("health") / 3);
+	babyargs.SetBool("sterilized", true);
+	gameLocal.SpawnEntityDef(babyargs, (idEntity**)&babyGrunt);
+	gameLocal.SpawnEntityDef(babyargs, (idEntity**)&babyGrunt2);
+	babyGrunt->SetOrigin(GetPhysics()->GetOrigin()+idVec3(-4.0f, -4.0f, 0.0f));
+	babyGrunt2->SetOrigin(GetPhysics()->GetOrigin()+idVec3(4.0f, 4.0f, 0.0f));
 }
 
 /*
@@ -213,7 +226,7 @@ void rvMonsterGrunt::OnTacticalChange ( aiTactical_t oldTactical ) {
 			break;
 
 		default:
-			actionRangedAttack.fl.disabled = false;
+			actionRangedAttack.fl.disabled = true;
 			break;
 	}
 }

@@ -7006,9 +7006,9 @@ void idGameLocal::InitializeSpawns( void ) {
 	idEntity* spot = NULL;
 
 	// initialize the spawns for clients as well, need them for free fly demo replays
-	if ( !isMultiplayer ) {
+	/*if ( !isMultiplayer ) {
 		return;
-	}
+	}*/
 
 	spawnSpots.Clear();
 
@@ -7124,12 +7124,15 @@ ddynerman: Selects a spawn spot randomly from spots furthest from the player
 ===========
 */
 idEntity* idGameLocal::SelectSpawnPoint( idPlayer* player ) {
+	
 	if( !isMultiplayer ) {
 		idEntity* ent = FindEntityUsingDef( NULL, "info_player_start" );
 		if ( !ent ) {
 			Error( "No info_player_start on map.\n" );
 		}
-		return ent;
+		if (GetMapName()[5]!='m'|| GetMapName()[6]!='p') {
+			return ent;
+		}
 	}
 
 	if ( player == NULL ) {
@@ -7148,14 +7151,12 @@ idEntity* idGameLocal::SelectSpawnPoint( idPlayer* player ) {
 	// Pick which spawns to use based on gametype
 // RITUAL BEGIN
 // squirrel: added DeadZone multiplayer mode
-	if( gameLocal.gameType == GAME_DM || gameLocal.gameType == GAME_TDM || gameLocal.gameType == GAME_TOURNEY ) {
+	if( gameLocal.gameType == GAME_DM || gameLocal.gameType == GAME_TDM || gameLocal.gameType == GAME_TOURNEY || gameLocal.gameType == GAME_SP) {
 		spawnArray = &spawnSpots;
 	} 
 	else if( IsFlagGameType() || gameLocal.gameType == GAME_DEADZONE ) {	
 		if( teamForwardSpawnSpots[ player->team ].Num() ) {
 			spawnArray = &teamForwardSpawnSpots[ player->team ];
-		} else {
-			spawnArray = &teamSpawnSpots[ player->team ];
 		}
 	}
 // RITUAL END
@@ -7164,6 +7165,8 @@ idEntity* idGameLocal::SelectSpawnPoint( idPlayer* player ) {
 		Error( "SelectSpawnPoint() - invalid spawn list." );
 		return NULL;
 	}
+	//Error("You got here");
+	//return NULL;
 
 	idVec3 refPos;
 	if ( player->lastKiller != NULL && !player->lastKiller->spectating && player->lastKiller->GetInstance() == player->GetInstance() ) {
@@ -7175,7 +7178,7 @@ idEntity* idGameLocal::SelectSpawnPoint( idPlayer* player ) {
 	for ( int i = 0; i < spawnArray->Num(); i++ ) {
 		idPlayerStart* spot = (*spawnArray)[i];
 
-		if ( spot->GetInstance() != player->GetInstance() || SpotWouldTelefrag( player, spot ) ) {
+		if ( spot->GetInstance() != player->GetInstance() || gameLocal.isMultiplayer && SpotWouldTelefrag( player, spot ) ) {
 			continue;
 		}
 
@@ -7184,10 +7187,12 @@ idEntity* idGameLocal::SelectSpawnPoint( idPlayer* player ) {
 
 		spawnSpot_t	newSpot;
 		
+		common->Printf("spot %i gotten\n", i);
 		newSpot.dist = dist;
 		newSpot.ent = (*spawnArray)[ i ];
 		weightedSpawns.Append( newSpot );
 	}
+
 
 	if ( weightedSpawns.Num() == 0 ) {
 		// no spawns avaialable, spawn randomly

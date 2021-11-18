@@ -35,6 +35,7 @@ protected:
 	int					kamakaziHealth;
 	int					strafeTime;
 	bool				strafeRight;
+	bool				raged;
 
 	virtual bool		CheckActions		( void );
 	virtual int			FilterTactical		( int availableTactical );
@@ -93,6 +94,8 @@ void rvMonsterSentry::Spawn ( void ) {
 
 	kamakaziHealth = spawnArgs.GetInt ( "kamakazi_Health", va("%d", health / 2) );
 	nextChatterTime = 0;
+
+	raged = false;
 } 
 
 /*
@@ -158,6 +161,49 @@ void rvMonsterSentry::Think ( void ) {
 	if ( kamakaziHealth == 0 && physicsObj.GetSlideMoveEntity () ) {
 		Explode ( );
 	} else {
+		idEntity* dummy = gameLocal.activeEntities.ListHead()->Owner();
+		idLinkList<idEntity>* node = gameLocal.activeEntities.ListHead();
+		bool rage = true;
+		int i = 0;
+		for (dummy = gameLocal.activeEntities.Next(); dummy != NULL; dummy = dummy->activeNode.Next()) {
+			if (dummy->GetEntityDefName() == this->GetEntityDefName()) {
+				i++;
+				//gameLocal.Printf("Found a baby dragon");
+				if (i >= 2) {
+					rage = false;
+					//gameLocal.Printf("Found another baby dragon");
+				}
+			}
+		}
+		
+		//do {
+		//	dummy = node->Owner();
+		//	//gameLocal.Printf("Set dummy node\n");
+		//	//gameLocal.Printf(dummy->GetClassType().classname);
+		//	if (dummy->name == this->name && dummy->DistanceTo(this) < 100.0f) {
+		//		i++;
+		//		gameLocal.Printf("Found a baby dragon");
+		//	}
+		//	if (i >= 2) {
+		//		rage = false;
+		//		gameLocal.Printf("Found another baby dragon");
+		//	}
+		//} while (i < 2&&(node->NextNode())!=NULL);
+		if (rage) {
+			combat.aggressiveScale = 5.0f;
+		}
+		else {
+			combat.aggressiveScale = 1.0f;
+		}
+		if (rage != raged) {
+			raged = rage;
+			if (rage) {
+				gameLocal.Printf("Baby Dragon enraged.\n");
+			}
+			else {
+				gameLocal.Printf("Baby Dragon calmed down.\n");
+			}
+		}
 		/*
 		if ( nextChatterTime < gameLocal.GetTime() ) {
 			if ( GetEnemy() ) {
@@ -310,7 +356,8 @@ stateResult_t rvMonsterSentry::State_Torso_BlasterAttack ( const stateParms_t& p
 	};
 	switch ( parms.stage ) {
 		case STAGE_INIT:
-			shots = (gameLocal.random.RandomInt ( maxShots - minShots ) + minShots) * combat.aggressiveScale;
+			shots = minShots;
+			if (combat.aggressiveScale > 1.0f) shots = maxShots;
 			return SRESULT_STAGE ( STAGE_ATTACK );
 
 		case STAGE_ATTACK:			

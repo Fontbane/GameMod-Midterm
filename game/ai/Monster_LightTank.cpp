@@ -88,6 +88,11 @@ void rvMonsterLightTank::Spawn ( void ) {
 	flamethrowerHealth	= spawnArgs.GetInt ( "flamethrowerHealth", "160" );
 	chargeDebounce = 0;
 	
+	//ProjectHeadOverlay(GetPhysics()->GetOrigin(), vec3_origin, 20.0f, "models/invisibility_overlay");
+	//GetRenderEntity()->overlayShader = "mtr_invisible"; to do: invisibility
+	//GetRenderEntity()->customSkin = declManager->FindSkin(spawnArgs.GetString("skin_invisibility"), false);
+	//UpdateVisuals();
+	
 	actionFlameThrower.Init ( spawnArgs, "action_flameThrower", "Torso_FlameThrower", AIACTIONF_ATTACK );
 	actionPowerUp.Init ( spawnArgs, "action_powerup", "Torso_PowerUp", 0 );
 	actionChargeAttack.Init ( spawnArgs, "action_chargeAttack", NULL, AIACTIONF_ATTACK );
@@ -307,7 +312,6 @@ void rvMonsterLightTank::DamageFeedback( idEntity *victim, idEntity *inflictor, 
 			}
 		}
 	}
-
 	idAI::DamageFeedback( victim, inflictor, damage );
 }
 

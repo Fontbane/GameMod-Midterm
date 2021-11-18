@@ -44,7 +44,7 @@ const int	CARRYOVER_WEAPONS_MASK		= 0x0FFFFFFF;
 const int	CARRYOVER_FLAGS_MASK		= 0xF0000000;
 
 const int	COOLDOWN_SUBSTITUTE = SEC2MS(20);
-const int	COOLDOWN_TELEPORTER = SEC2MS(60);
+const int	COOLDOWN_TELEPORTER = SEC2MS(30);
 const int	COOLDOWN_GRAV_SWITCH = SEC2MS(5);
 
 const int KnackCooldowns[] = {
@@ -252,7 +252,7 @@ public:
 // squirrel: Mode-agnostic buymenus
 	int						carryOverWeapons;
 // RITUAL END
-	int						powerups;
+	long long int						powerups;
 	idKnackInfo				knack;
 	int						armor;
 	int						maxarmor;
@@ -616,8 +616,6 @@ public:
 	bool					HasKnack					(int knack);
 	bool					GiveKnack(int knack);
 	bool					ActivateKnack(void);
-	void					SwitchKnack(int knack);
-	void					ClearKnack(void);
 
 	// Helper methods to retrieving dictionaries
 	const idDeclEntityDef*	GetWeaponDef				( int weaponIndex );

@@ -434,7 +434,8 @@ void idInventory::Save( idSaveGame *savefile ) const {
 
 	savefile->WriteInt( maxHealth );
 	savefile->WriteInt( weapons );
-	savefile->WriteInt( powerups );
+	savefile->WriteInt( powerups >> 16 );//save the upper and lower powerup bits separately to fit in int
+	savefile->WriteInt( powerups << 16 );
 	savefile->WriteInt( armor );
 	savefile->WriteInt( maxarmor );
 
@@ -511,12 +512,16 @@ idInventory::Restore
 */
 void idInventory::Restore( idRestoreGame *savefile ) {
 	int i, num;
+	int phi, plo;
 
 	savefile->ReadInt( maxHealth );
 	savefile->ReadInt( weapons );
-	savefile->ReadInt( powerups );
+	savefile->ReadInt( phi );
+	savefile->ReadInt( plo );
 	savefile->ReadInt( armor );
 	savefile->ReadInt( maxarmor );
+
+	powerups = plo + (long long int) phi << 16;//restore halves of the powerups
 
 	for( i = 0; i < MAX_AMMO; i++ ) {
 		savefile->ReadInt( ammo[ i ] );
@@ -4541,7 +4546,7 @@ void idPlayer::StartPowerUpEffect( int powerup ) {
 		}
 
 		case POWERUP_CURSE_BLINDNESS: {
-			playerView.Flash(colorBlack, SEC2MS(300));
+			playerView.Flash(colorBlack, SEC2MS(60));
 			break;
 		}
 
@@ -4661,7 +4666,7 @@ void idPlayer::StopPowerUpEffect( int powerup ) {
 			break;
 		}
 		case POWERUP_CURSE_LEVITATION: {
-			GetPhysics()->SetGravity(idVec3(-gameLocal.GetCurrentGravity(this).x, -gameLocal.GetCurrentGravity(this).y * 16, -gameLocal.GetCurrentGravity(this).z));
+			SetOrigin(GetPhysics()->GetOrigin() + idVec3(0, 0, -CM_CLIP_EPSILON));
 			UpdateGravity();
 			break;
 		}
@@ -4802,7 +4807,7 @@ bool idPlayer::GivePowerUp( int powerup, int time, bool team ) {
 			break;
 		}
 		case POWERUP_CURSE_LEVITATION: {
-			GetPhysics()->SetGravity(idVec3(-gameLocal.GetCurrentGravity(this).x, -gameLocal.GetCurrentGravity(this).y/16, -gameLocal.GetCurrentGravity(this).z));
+			GetPhysics()->SetLinearVelocity(idVec3(0, 0, 20));
 			UpdateGravity();
 			break;
 		}
@@ -5174,7 +5179,7 @@ back into snapshot.  We don't want to announce powerups in this case
 ===============
 */
 bool idPlayer::GiveKnack(int knack) {
-	if (knack < 0 || knack >= POWERUP_MAX) {
+	if (knack < 0 || knack >= KNACK_MAX) {
 		gameLocal.Warning("Player given knack %i\n which is out of range", knack);
 		return false;
 	}
@@ -5183,14 +5188,14 @@ bool idPlayer::GiveKnack(int knack) {
 
 	// only start client effects in the same instance
 	// play all stuff in instance 0 for server netdemo - atm other instances are not recorded
-	bool playClientEffects = ((gameLocal.GetDemoState() == DEMO_PLAYING && gameLocal.IsServerDemo() && instance == 0) ||
-		(gameLocal.GetLocalPlayer() && gameLocal.GetLocalPlayer()->GetInstance() == instance));
+	//bool playClientEffects = ((gameLocal.GetDemoState() == DEMO_PLAYING && gameLocal.IsServerDemo() && instance == 0) ||
+		//(gameLocal.GetLocalPlayer() && gameLocal.GetLocalPlayer()->GetInstance() == instance));
 
 	switch (knack) {
 
 	case KNACK_BLOODLUST: {
 		// shouchard:  added notice for picking up the flag
-		if (playClientEffects && this == gameLocal.GetLocalPlayer()) {
+		if ( this == gameLocal.GetLocalPlayer()) {
 			if (hud) {
 				hud->SetStateString("main_notice_text", "Knack Obtained: Bloodlust");
 				hud->HandleNamedEvent("main_notice");
@@ -5201,7 +5206,7 @@ bool idPlayer::GiveKnack(int knack) {
 
 	case KNACK_EMPATHY: {
 		// shouchard:  added notice for picking up the flag
-		if (playClientEffects && this == gameLocal.GetLocalPlayer()) {
+		if ( this == gameLocal.GetLocalPlayer()) {
 			if (hud) {
 				hud->SetStateString("main_notice_text", "Knack Obtained: Empathy Shield");
 				hud->HandleNamedEvent("main_notice");
@@ -5212,7 +5217,7 @@ bool idPlayer::GiveKnack(int knack) {
 
 	case KNACK_SUBSTITUTE: {
 		// shouchard:  added notice for picking up the flag
-		if (playClientEffects && this == gameLocal.GetLocalPlayer()) {
+		if ( this == gameLocal.GetLocalPlayer()) {
 			if (hud) {
 				hud->SetStateString("main_notice_text", "Knack Obtained: Substitute");
 				hud->HandleNamedEvent("main_notice");
@@ -5223,7 +5228,7 @@ bool idPlayer::GiveKnack(int knack) {
 
 	case KNACK_TELEPORTER: {
 		// shouchard:  added notice for picking up the flag
-		if (playClientEffects && this == gameLocal.GetLocalPlayer()) {
+		if ( this == gameLocal.GetLocalPlayer()) {
 			if (hud) {
 				hud->SetStateString("main_notice_text", "Knack Obtained: Teleporter");
 				hud->HandleNamedEvent("main_notice");
@@ -5234,7 +5239,7 @@ bool idPlayer::GiveKnack(int knack) {
 
 	case KNACK_GRAV_SWITCH: {
 		// shouchard:  added notice for picking up the flag
-		if (playClientEffects && this == gameLocal.GetLocalPlayer()) {
+		if ( this == gameLocal.GetLocalPlayer()) {
 			if (hud) {
 				hud->SetStateString("main_notice_text", "Knack Obtained: Grav Switch");
 				hud->HandleNamedEvent("main_notice");
@@ -5283,12 +5288,12 @@ bool idPlayer::ActivateKnack() {
 		fl.notarget = false;
 	}
 	if (knack==KNACK_TELEPORTER){
-		idEntity* newPt = gameLocal.SelectSpawnPoint(this);
 		idVec3 newPos;
-		idMat3 newAx;
-		newPt->GetPosition(newPos, newAx);
-		
-		Teleport(newPos, newAx.ToAngles(), newPt);
+		idAngles newAng;
+		idEntity newPt;
+		if (SelectSpawnPoint(newPos, newAng)) {
+			Teleport(newPos, newAng, gameLocal.SelectSpawnPoint(this));
+		}
 	}
 
 	inventory.ActivateKnack();
@@ -8149,9 +8154,6 @@ idPlayer::UpdateGravity
 */
 void idPlayer::UpdateGravity( void ) {
 	GetPhysics()->SetGravity( gameLocal.GetCurrentGravity(this) );
-	if (PowerUpActive(POWERUP_CURSE_LEVITATION)) {
-		GetPhysics()->SetGravity(idVec3(-gameLocal.GetCurrentGravity(this).x, (-gameLocal.GetCurrentGravity(this).y)/16, -gameLocal.GetCurrentGravity(this).z));
-	}
 }
 // RAVEN END
 
@@ -9778,6 +9780,8 @@ void idPlayer::Think( void ) {
 	if ( weapon ) {
 		weapon->SetPushVelocity( physicsObj.GetPushedLinearVelocity() );
 	}
+	idVec3 vel = GetPhysics()->GetLinearVelocity();
+	if (PowerUpActive(POWERUP_CURSE_LEVITATION)) GetPhysics()->SetLinearVelocity(idVec3(vel.x, vel.y, 30));
 
 	EvaluateControls();
 
@@ -10549,6 +10553,10 @@ void idPlayer::Damage( idEntity *inflictor, idEntity *attacker, const idVec3 &di
 		int oldHealth = health;
 		health -= damage;
 
+		if (attacker != this && HasKnack(KNACK_EMPATHY) && attacker->CanTakeDamage()) {
+			attacker->Damage(gameLocal.world, gameLocal.world, vec3_zero, "damage_triggerhurt_10", damage/4.0f, location);
+		}
+
 		GAMELOG_ADD ( va("player%d_damage_taken", entityNumber ), damage );
 		GAMELOG_ADD ( va("player%d_damage_%s", entityNumber, damageDefName), damage );
 
@@ -10589,10 +10597,6 @@ void idPlayer::Damage( idEntity *inflictor, idEntity *attacker, const idVec3 &di
 			if ( !g_testDeath.GetBool() ) {
 				lastDmgTime = gameLocal.time;
 			}
-		}
-
-		if (attacker != this && HasKnack(KNACK_EMPATHY) && attacker->CanTakeDamage()) {
-			attacker->Damage(gameLocal.world, gameLocal.world, vec3_zero, "damage_triggerhurt_10", damageScale, location);
 		}
 	} else {
  		// don't accumulate impulses
@@ -13269,7 +13273,14 @@ void idPlayer::DamageFeedback( idEntity *victim, idEntity *inflictor, int &damag
 
 	SetLastHitTime( gameLocal.time, armorHit );
 	if (HasKnack(KNACK_BLOODLUST)) {
-		health = min(health, health + damage / 10);
+		int heal;
+		if (health + damage / 10 > inventory.maxHealth) {
+			heal = inventory.maxHealth - health;
+		}
+		else {
+			heal = damage / 10;
+		}
+		AdjustHealthByDamage(-heal);
 	}
 }
 
