@@ -34,6 +34,8 @@ protected:
 	int						shots;
 	int						minShots;
 	int						maxShots;
+	int						fuseStart;
+	bool					fuseLit;
 	bool					isOpen;
 	bool					vehicleCollision;
 	float					moveCurrentAnimRate;
@@ -91,7 +93,7 @@ void rvMonsterConvoyGround::InitSpawnArgsVariables ( void )
 	maxShots			= spawnArgs.GetInt ( "maxShots" );
 	moveAccelRate		= spawnArgs.GetFloat ( "moveAccelRate", ".1" );
 	moveAnimRateMin		= spawnArgs.GetFloat ( "moveMinAnimRate", "1" );
-	moveAnimRateRange	= spawnArgs.GetFloat ( "moveMaxAnimRate", "10" ) - moveAnimRateMin;
+	moveAnimRateRange	= spawnArgs.GetFloat ( "moveMaxAnimRate", "2" ) - moveAnimRateMin;
 }
 
 /*
@@ -108,6 +110,9 @@ void rvMonsterConvoyGround::Spawn ( void ) {
 	
 	onGround = true;
 
+	fuseStart = 0;
+
+	fuseLit = false;
 }
 
 /*
@@ -208,6 +213,7 @@ void rvMonsterConvoyGround::OnDeath	( void ) {
 	idVec3 fxOrg;
 	idVec3 up;
 	idMat3 fxAxis;
+	idVec3 pos = GetPhysics()->GetOrigin();
 
 	//center it
 	fxOrg = GetPhysics()->GetCenterMass();
@@ -224,6 +230,10 @@ void rvMonsterConvoyGround::OnDeath	( void ) {
 		fxOrg = renderEntity.origin + (fxOrg*renderEntity.axis);
 	}
 
+	gameLocal.RadiusDamage(pos, this, this, this, this, "damage_gunner_grenade", 1.0f);
+
+	gameLocal.GetLocalPlayer()->Damage(this, this, pos, "damage_explosion", 1.0f, 1);
+
 	gameLocal.PlayEffect ( spawnArgs, "fx_death", fxOrg, fxAxis );
 	idAI::OnDeath ( );
 }
@@ -239,13 +249,14 @@ void rvMonsterConvoyGround::AdjustHealthByDamage ( int damage ) {
 	} else { 
 		PlayEffect ( "fx_shieldHit", animator.GetJointHandle ( "axis" ) );
 	}
+	if (fuseLit) PlayEffect("fx_shieldHit", animator.GetJointHandle("axis"));
 }
 
 void rvMonsterConvoyGround::Damage ( idEntity *inflictor, idEntity *attacker, const idVec3 &dir, const char *damageDefName, const float damageScale, const int location )
 {
 	vehicleCollision = false;
 	const idDict *damageDef = gameLocal.FindEntityDefDict( damageDefName, false );
-	if ( damageDef && damageDef->GetBool( "vehicle_collision" ) ) {
+	if ( gameLocal.GetLocalPlayer()==attacker || damageDefName=="damage_gib" ) {
 		vehicleCollision = true;
 	}
 
@@ -257,7 +268,14 @@ rvMonsterConvoyGround::Spawn
 ================
 */
 bool rvMonsterConvoyGround::CheckActions ( void ) {
-	if ( isOpen ) {
+	if (fuseLit && gameLocal.time - fuseStart < SEC2MS(3)) {
+		Damage(this, this, viewAxis[0], "damage_triggerhurt_1", 1.0f, 0);
+	}
+	else if (fuseLit && gameLocal.time - fuseStart >= SEC2MS(3)) {
+		
+		Damage(this, this, viewAxis[0], "damage_gib", 1.0f, 0);
+	}
+	else if ( isOpen ) {
 		if ( move.fl.moving ) {
 /*		
 			|| !CheckAction_RangedAttack( &actionBlasterAttack, -1 ) 
@@ -267,18 +285,28 @@ bool rvMonsterConvoyGround::CheckActions ( void ) {
 */
 			StartSound( "snd_prepare", SND_CHANNEL_ANY, 0, 0, 0  );
 			PerformAction ( "Torso_Close", 4, true );
+			if (physicsObj.GetSlideMoveEntity()&&!fuseLit) {
+				fuseStart = gameLocal.time;
+				fuseLit = true;
+				gameLocal.Printf("Fuse started");
+			}
 			return true;
 		}
 
-		if ( PerformAction ( &actionBlasterAttack, (checkAction_t)&idAI::CheckAction_RangedAttack, &actionTimerRangedAttack ) ) {
+		if ( !fuseLit && PerformAction ( &actionBlasterAttack, (checkAction_t)&idAI::CheckAction_RangedAttack, &actionTimerRangedAttack ) ) {
 			return true;
 		}
 	} else {
 		// Open up if we have stopped and have an enemy
-		if ( !move.fl.moving && physicsObj.HasGroundContacts ( ) && enemy.ent && legsAnim.IsIdle ( ) && CheckTactical ( AITACTICAL_RANGED ) ) {
+		if ( !fuseLit && !move.fl.moving && physicsObj.HasGroundContacts ( ) && enemy.ent && gameLocal.GetLocalPlayer()->DistanceTo(this)>10.0f && legsAnim.IsIdle ( )) {
 			StartSound( "snd_prepare", SND_CHANNEL_ANY, 0, 0, 0  );
 			PerformAction ( "Torso_Open", 4, true );
 			return true;
+		}
+		if (physicsObj.GetSlideMoveEntity() && !fuseLit) {
+			fuseStart=gameLocal.time;
+			fuseLit = true;
+			gameLocal.Printf("Fuse started");
 		}
 	}
 

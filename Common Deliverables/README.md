@@ -23,7 +23,9 @@ Knacks are like the "personal superpower" trope a couple anime have, or ultimate
 Some enemies have been converted to new monsters. The models are the same, so you'll have to use your imagination.
     - **Golem** *(formerly Grunt)*: Incredibly tanky but doesn't hit too hard. Once you've finally depleted its health, you'll be surprised when it breaks apart into two Golemites! Each of these Golemites have the same attacks, but a third of the health of the original.
     - **Baby Dragon** *(formerly Sentry)*: This fire breathing baby doesn't seem like much of a threat when it's with its friends. But when it's separated from other Baby Dragons, it will erupt into a rage!
-    - **Wendigo** *(formerly Light Tank)*: What's that noise? It's an invisible enemy! The Wendigo will lurk in the shadows and show itself to scare you with a melee attack. You can make it show itself early if you manage to hit it first! *NOTE: Does not work in current version*
+    - **Wendigo** *(formerly Light Tank)*: Be careful where you wave that flashlight around- shine it on this monster and it'll get pissed off, turning off your flashlight and blinding you for a short time!
+    - **Intoxigator** *(formerly Slimy Transfer)*: Get some cold water ready, because this a taste of this groggy gator's alcoholic spit will get you drunk for a short time! *Note: Intoxigator spit is not fit for consumption or wound sterilization due to its concentration of stomach acid.*
+    - **Bob-omb** *(formerly Ground Convoy)*: Don't let this one get too close. From a distance, it'll only shoot at you. But once it touches you, its fuse will light and you'll have 3 seconds to run before it blows up.
 ## New Weapons
 10 weapons have been revamped to fit the new gameplay.
     - **Sword** *(replaces Gauntlet)*: Slash your way to victory with this epic sword! You can also charge a powerful stab with it.

@@ -99,6 +99,10 @@ rvMonsterSlimyTransfer::CheckActions
 ================
 */
 bool rvMonsterSlimyTransfer::CheckActions ( void ) {
+	if (aifl.hitEnemy && enemy.ent.GetEntity()->IsType(idPlayer::GetClassType()))
+	{
+		dynamic_cast <idPlayer*> (enemy.ent.GetEntity())->GivePowerUp(POWERUP_CURSE_DRUNK, SEC2MS(30));
+	}
 	if ( PerformAction ( &actionVomitAttack, (checkAction_t)&idAI::CheckAction_RangedAttack, &actionTimerRangedAttack ) ) {
 		return true;
 	}

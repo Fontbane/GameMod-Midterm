@@ -406,6 +406,17 @@ rvMonsterLightTank::CheckActions
 ================
 */
 bool rvMonsterLightTank::CheckActions ( void ) {
+	idPlayer* pl = gameLocal.GetLocalPlayer();
+	if (pl->IsFlashlightOn() && pl->CanSee(this, true)) {
+		pl->Flashlight(false);
+		pl->playerView.Flash(colorBlack, SEC2MS(10));
+		StartSound("snd_splat", SND_CHANNEL_ANY, 0, false, NULL);
+		if (PerformAction(&actionEvadeLeft, (checkAction_t)&idAI::CheckAction_EvadeLeft) ||
+			PerformAction(&actionEvadeRight, (checkAction_t)&idAI::CheckAction_EvadeRight) ||
+			PerformAction(&actionLeapAttack, (checkAction_t)&idAI::CheckAction_LeapAttack)) {
+			return true;
+		}
+	}
 	if ( PerformAction ( &actionFlameThrower, (checkAction_t)&idAI::CheckAction_RangedAttack ) ) {
 		return true;
 	}

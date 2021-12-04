@@ -4,6 +4,8 @@ windowDef Desktop
 	menugui	1
 	rect	0,0,640,480
 	backcolor	0,0,0,1
+	::	mousey
+	-	186
 	definevec4	"corner"	0.564,0.603,0.286,0.4
 	definevec4	"corner_0"	0.564,0.603,0.286,0
 	definevec4	"white"	1,1,1,1
@@ -20,8 +22,8 @@ windowDef Desktop
 	definevec4	"orange"	0.890,0.537,0,1
 	definevec4	"yellow_8"	1,0.745,0.137,0.8
 	definevec4	"grey1_4"	0.435,0.435,0.435,0.4
-	definefloat	"tooltip_x_offset"	gui::mousex-255
-	definefloat	"tooltip_y_offset"	gui::mousey-186
+	definefloat	"tooltip_x_offset"	gui
+	definefloat	"tooltip_y_offset"	gui
 	defineicon	"fve"	"gfx/guis/mainmenu/icon_favorite.tga"
 	defineicon	"pse"	"gfx/guis/mainmenu/icon_locked.tga"
 	defineicon	"dse"	"gfx/guis/mainmenu/icon_dedserver.tga"
@@ -652,35 +654,35 @@ windowDef Desktop
 			rect	0,0,640,480
 			visible	1
 			background	"gfx/guis/mainmenu/bg_temp"
-			matcolor	1,1,1,1
+			matcolor	0,0,1,1
 		}
 		windowDef bg_temp2
 		{
 			rect	0,0,640,480
 			visible	1
 			background	"gfx/guis/mainmenu/bg_temp2"
-			matcolor	1,1,1,0
+			matcolor	0,0,1,0
 		}
 		windowDef bg_temp3
 		{
 			rect	0,0,640,480
 			visible	1
 			background	"gfx/guis/mainmenu/bg_temp3"
-			matcolor	1,1,1,0
+			matcolor	0,0.250,0.501,0.0313
 		}
 		windowDef bg_temp4
 		{
 			rect	0,0,640,480
 			visible	1
 			background	"gfx/guis/mainmenu/bg_temp4"
-			matcolor	1,1,1,0
+			matcolor	0,0,0.501,0
 		}
 		windowDef static
 		{
 			visible	1
 			rect	0,0,640,480
 			background	"gfx/guis/common/static1"
-			matcolor	0.894,0.917,0.815,0.024
+			matcolor	0.501,0.501,1,0.0235
 			matscalex	-1
 		}
 		windowDef grad
@@ -688,14 +690,14 @@ windowDef Desktop
 			rect	0,0,640,480
 			visible	1
 			background	"gfx/guis/mainmenu/bg_darkgrad"
-			matcolor	0,0,0,1
+			matcolor	0,0.501,1,1
 		}
 		windowDef screen
 		{
 			rect	0,24,640,480
 			visible	1
 			background	"gfx/guis/mainmenu/screen"
-			matcolor	0.7,0.7,0.7,1
+			matcolor	0.250,0,0.501,1
 		}
 		windowDef screen2
 		{
@@ -709,14 +711,14 @@ windowDef Desktop
 			rect	-11,0,683,480
 			visible	1
 			background	"gfx/guis/mainmenu/bg_darkgrad2"
-			matcolor	0,0,0,0
+			matcolor	0,0.501,1,0
 		}
 		windowDef grad3
 		{
 			rect	0,0,640,480
 			visible	1
 			background	"gfx/guis/mainmenu/bg_darkgrad2"
-			matcolor	0,0,0,0
+			matcolor	0,0,0.627,0
 			matscalex	-1
 		}
 		windowDef grad4
@@ -724,7 +726,7 @@ windowDef Desktop
 			rect	0,0,640,480
 			visible	1
 			background	"gfx/guis/mainmenu/bg_darkgrad3"
-			matcolor	0,0,0,0
+			matcolor	0.501,0,1,0
 			matscalex	-1
 		}
 		windowDef grad5
@@ -732,7 +734,7 @@ windowDef Desktop
 			rect	0,0,640,750
 			visible	1
 			background	"gfx/guis/mainmenu/bg_darkgrad3"
-			matcolor	0,0,0,0
+			matcolor	0,0,0.501,0.172
 			matscalex	-1
 		}
 		windowDef grad6
@@ -740,7 +742,7 @@ windowDef Desktop
 			rect	0,0,640,548
 			visible	1
 			background	"gfx/guis/mainmenu/bg_darkgrad3"
-			matcolor	0,0,0,0
+			matcolor	0,0.501,1,0.203
 			matscalex	-1
 		}
 		windowDef grad7
@@ -748,14 +750,14 @@ windowDef Desktop
 			rect	0,0,640,574
 			visible	1
 			background	"gfx/guis/mainmenu/bg_darkgrad3"
-			matcolor	0,0,0,0
+			matcolor	0,0,1,0.0470
 			matscalex	-1
 		}
 		windowDef grad8
 		{
 			rect	0,0,640,480
 			visible	1
-			backcolor	0,0,0,0
+			backcolor	0,0,0.627,0.2
 		}
 		windowDef grid1
 		{
@@ -773,7 +775,7 @@ windowDef Desktop
 		}
 		windowDef topbar
 		{
-			rect	-400,0,1045,129
+			rect	-399,0,1045,129
 			visible	1
 			background	"gfx/guis/mainmenu/topbar"
 			matcolor	1,1,1,1
@@ -814,8 +816,11 @@ windowDef Desktop
 			{
 				rect	6,119,376,92
 				visible	1
-				background	"gfx/guis/mainmenu/q4text"
-				matcolor	1,1,1,1
+				forecolor	1,1,1,0.811
+				text	"Risk of Kane"
+				textscale	1
+				textstyle	1
+				font	"fonts/chain"
 			}
 			windowDef main_b1
 			{
@@ -857,35 +862,35 @@ windowDef Desktop
 				rect	32,221,12,12
 				visible	1
 				background	"gfx/guis/mainmenu/corner"
-				matcolor	0.564,0.603,0.286,0.4
+				matcolor	0.501,0.501,1,0.4
 			}
 			windowDef main_b2_corner
 			{
 				rect	32,251,12,12
 				visible	1
 				background	"gfx/guis/mainmenu/corner"
-				matcolor	0.564,0.603,0.286,0.4
+				matcolor	0.501,0.501,1,0.4
 			}
 			windowDef main_b3_corner
 			{
 				rect	32,281,12,12
 				visible	1
 				background	"gfx/guis/mainmenu/corner"
-				matcolor	0.564,0.603,0.286,0.4
+				matcolor	0.501,0.501,1,0.337
 			}
 			windowDef main_b4_corner
 			{
 				rect	32,311,12,12
 				visible	1
 				background	"gfx/guis/mainmenu/corner"
-				matcolor	0.564,0.603,0.286,0.4
+				matcolor	0.501,0.501,1,0.4
 			}
 			windowDef main_b9_corner
 			{
 				rect	32,341,12,12
 				visible	1
 				background	"gfx/guis/mainmenu/corner"
-				matcolor	0.564,0.603,0.286,0
+				matcolor	0.501,0.501,1,0
 			}
 			windowDef main_t_b1
 			{
@@ -937,35 +942,35 @@ windowDef Desktop
 				rect	-12,401,410,25
 				visible	1
 				background	"gfx/guis/mainmenu/bg2"
-				matcolor	0.243,0.290,0.129,0.3
+				matcolor	0,0.498,0.749,0.294
 			}
 			windowDef main_b5_corner
 			{
 				rect	32,408,9,9
 				visible	1
 				background	"gfx/guis/mainmenu/corner"
-				matcolor	0.564,0.603,0.286,0.4
+				matcolor	0.501,0.501,0.752,0.4
 			}
 			windowDef main_b6_corner
 			{
 				rect	100,408,9,9
 				visible	1
 				background	"gfx/guis/mainmenu/corner"
-				matcolor	0.564,0.603,0.286,0.4
+				matcolor	0.501,0.501,0.752,0.4
 			}
 			windowDef main_b7_corner
 			{
 				rect	192,408,9,9
 				visible	1
 				background	"gfx/guis/mainmenu/corner"
-				matcolor	0.564,0.603,0.286,0.4
+				matcolor	0.501,0.501,0.752,0.4
 			}
 			windowDef main_b8_corner
 			{
 				rect	279,408,9,9
 				visible	1
 				background	"gfx/guis/mainmenu/corner"
-				matcolor	0.564,0.603,0.286,0.4
+				matcolor	0.501,0.501,0.752,0.4
 			}
 			windowDef main_t_b5
 			{
